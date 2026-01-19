@@ -72,16 +72,19 @@ public class MainWindow extends JFrame implements TableChangedListener {
         menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
                 InputEvent.CTRL_MASK));
         menuItem.addActionListener(ae -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setAcceptAllFileFilterUsed(false);
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("Android resource files", "arsc");
-            fileChooser.addChoosableFileFilter(filter);
-            int result = fileChooser.showOpenDialog(getRootPane());
+            openedFilePath = "D:/Program Files/v2rayN-windows-64/bin/packages/3.40.0/resources.arsc";
+            openFile(openedFilePath);
 
-            if (result == JFileChooser.APPROVE_OPTION) {
-                openedFilePath = fileChooser.getSelectedFile().getPath();
-                openFile(openedFilePath);
-            }
+//            JFileChooser fileChooser = new JFileChooser();
+//            fileChooser.setAcceptAllFileFilterUsed(false);
+//            FileNameExtensionFilter filter = new FileNameExtensionFilter("Android resource files", "arsc");
+//            fileChooser.addChoosableFileFilter(filter);
+//            int result = fileChooser.showOpenDialog(getRootPane());
+//
+//            if (result == JFileChooser.APPROVE_OPTION) {
+//                openedFilePath = fileChooser.getSelectedFile().getPath();
+//                openFile(openedFilePath);
+//            }
         });
 
         saveAs = new JMenuItem("Save");
@@ -111,10 +114,19 @@ public class MainWindow extends JFrame implements TableChangedListener {
         menuItem.addActionListener(l -> new AboutDialog(MainWindow.this).showDialog());
         aboutMenu.add(menuItem);
 
+        JMenu patchMenu = new JMenu("Patch");
+        menuItem = new JMenuItem("Select Patch File");
+        saveAs.addActionListener(l -> {
+            selectPatchFile();
+        });
+
+        patchMenu.add(menuItem);
+
         // Create a menu bar
         JMenuBar menuBar = new JMenuBar();
 
         menuBar.add(fileMenu);
+        menuBar.add(patchMenu);
         menuBar.add(aboutMenu);
 
         return menuBar;
@@ -172,6 +184,9 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
     }
 
+    private void selectPatchFile() {
+        
+    }
     private void selectPathToSave() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setAcceptAllFileFilterUsed(false);
