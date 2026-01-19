@@ -157,7 +157,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
     }
 
     private void patchFile(String path) {
-        treeView.openNode("");
+        treeView.openNode("com.kakaogames.gdts/string/default");
     }
 
     private void openFile(String path) {

@@ -21,10 +21,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ArscTreeView extends JTree implements MouseListener, PackageEditDialog.ValueChangedListener {
 
@@ -148,7 +145,40 @@ public class ArscTreeView extends JTree implements MouseListener, PackageEditDia
     }
 
     public void openNode(String path) {
+        String[] split = path.split("/");
+        ArscNode packageNode = GetPackageNode(split[0]);
+        if (packageNode != null) {
+            long count = Arrays.stream(split).count();
+            ArscNode current = packageNode;
+            for (int i = 1; i < count; i++) {
+                String name = split[i];
+                int childCount = treeModel.getChildCount(current);
+                boolean find = false;
+                for (int j = 0; j < childCount; j++) {
+                    ArscNode child = (ArscNode) treeModel.getChild(current, j);
+                    if (child.getName().equals(name)) {
+                        find = true;
+                        current = child;
+                        break;
+                    }
+                }
+                if (!find) {
+                    return;
+                }
+            }
+        }
+    }
 
+    private ArscNode GetPackageNode(String packageName) {
+        Object root = treeModel.getRoot();
+        int childCount = treeModel.getChildCount(root);
+        for (int i = 0; i < childCount; i++) {
+            ArscNode child = (ArscNode) treeModel.getChild(root, i);
+            if (child.getPackageName().equals(packageName)) {
+                return child;
+            }
+        }
+        return null;
     }
 
     private void openNode() {
