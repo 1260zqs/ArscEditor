@@ -25,6 +25,9 @@ import java.util.List;
 
 public class MainWindow extends JFrame implements TableChangedListener {
 
+    public static String openFileArg;
+    public static String patchFileArg;
+
     private ArscTreeView treeView;
     private JSplitPane splitPane;
     private JMenuItem saveAs;
@@ -71,7 +74,9 @@ public class MainWindow extends JFrame implements TableChangedListener {
     }
 
     private void onWindowReady() {
-
+        if (openFileArg != null && java.nio.file.Files.exists(Paths.get(openFileArg))) {
+            openFile(openFileArg);
+        }
     }
 
     /**
