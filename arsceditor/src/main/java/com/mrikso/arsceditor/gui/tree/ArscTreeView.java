@@ -148,7 +148,7 @@ public class ArscTreeView extends JTree implements MouseListener, PackageEditDia
         openNode(packageName);
     }
 
-    public void openNode(String path) {
+    public ArscNode openNode(String path) {
         String[] split = path.split("/");
         ArscNode packageNode = GetPackageNode(split[0]);
         if (packageNode != null) {
@@ -167,10 +167,14 @@ public class ArscTreeView extends JTree implements MouseListener, PackageEditDia
                     }
                 }
                 if (!find) {
-                    return;
+                    return null;
                 }
             }
+            if (current != packageNode) {
+                return current;
+            }
         }
+        return null;
     }
 
     private ArscNode GetPackageNode(String packageName) {
