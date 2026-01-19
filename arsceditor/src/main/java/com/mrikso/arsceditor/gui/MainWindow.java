@@ -116,7 +116,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
         JMenu patchMenu = new JMenu("Patch");
         menuItem = new JMenuItem("Select Patch File");
-        saveAs.addActionListener(l -> {
+        menuItem.addActionListener(l -> {
             selectPatchFile();
         });
 
@@ -156,6 +156,10 @@ public class MainWindow extends JFrame implements TableChangedListener {
         saveAs.setEnabled(true);
     }
 
+    private void patchFile(String path) {
+        treeView.openNode("");
+    }
+
     private void openFile(String path) {
         new SwingWorker<List<Chunk>, Chunk>() {
             @Override
@@ -185,7 +189,15 @@ public class MainWindow extends JFrame implements TableChangedListener {
     }
 
     private void selectPatchFile() {
-        
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Select patch file", "txt");
+        fileChooser.addChoosableFileFilter(filter);
+
+        int result = fileChooser.showOpenDialog(getRootPane());
+        if (result == JFileChooser.APPROVE_OPTION) {
+            patchFile(fileChooser.getSelectedFile().getPath());
+        }
     }
     private void selectPathToSave() {
         JFileChooser fileChooser = new JFileChooser();
