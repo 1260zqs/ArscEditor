@@ -76,6 +76,9 @@ public class MainWindow extends JFrame implements TableChangedListener {
     private void onWindowReady() {
         if (openFileArg != null && java.nio.file.Files.exists(Paths.get(openFileArg))) {
             openFile(openFileArg);
+            if (patchFileArg != null && java.nio.file.Files.exists(Paths.get(patchFileArg))) {
+//                patchFile(patchFileArg);
+            }
         }
     }
 
