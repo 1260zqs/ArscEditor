@@ -110,6 +110,17 @@ public class ArscTableView extends JTreeTable implements MouseListener, Resource
         return null;
     }
 
+    public void edit(JTableTreeNode node, String resValue){
+        selectedNode = node;
+        String resId = node.getId();
+        String resName = node.getName();
+        if (node.isComplex()) {
+            onResourceEdited(resName, resId, null, null, false);
+        }else {
+            onResourceEdited(resName, resId, resValue, node.getValueType(), node.isChildren());
+        }
+    }
+
     @Override
     public void onResourceEdited(String name, String id, String value, ValueType resourceType, boolean isChildren) {
         try {

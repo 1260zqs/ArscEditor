@@ -78,10 +78,17 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
     private void onWindowReady() {
         if (openFileArg != null && java.nio.file.Files.exists(Paths.get(openFileArg))) {
-            openFile(openFileArg);
+            Runnable next = null;
             if (patchFileArg != null && java.nio.file.Files.exists(Paths.get(patchFileArg))) {
-//                patchFile(patchFileArg);
+                next = new Runnable() {
+                    @Override
+                    public void run() {
+                        patchFile(patchFileArg);
+                    }
+                };
             }
+            openedFilePath = openFileArg;
+            openFile(openFileArg, next);
         }
     }
 
@@ -93,39 +100,31 @@ public class MainWindow extends JFrame implements TableChangedListener {
         JMenuItem menuItem;
 
         menuItem = new JMenuItem("Open");
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                InputEvent.CTRL_MASK));
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         menuItem.addActionListener(ae -> {
-            openedFilePath = "D:/Program Files/v2rayN-windows-64/bin/packages/3.40.0/resources.arsc";
-            openFile(openedFilePath);
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("Android resource files", "arsc");
+            fileChooser.addChoosableFileFilter(filter);
 
-//            JFileChooser fileChooser = new JFileChooser();
-//            fileChooser.setAcceptAllFileFilterUsed(false);
-//            FileNameExtensionFilter filter = new FileNameExtensionFilter("Android resource files", "arsc");
-//            fileChooser.addChoosableFileFilter(filter);
-//            int result = fileChooser.showOpenDialog(getRootPane());
-//
-//            if (result == JFileChooser.APPROVE_OPTION) {
-//                openedFilePath = fileChooser.getSelectedFile().getPath();
-//                openFile(openedFilePath);
-//            }
+            int result = fileChooser.showOpenDialog(getRootPane());
+            if (result == JFileChooser.APPROVE_OPTION) {
+                openedFilePath = fileChooser.getSelectedFile().getPath();
+                openFile(openedFilePath, null);
+            }
         });
 
         saveAs = new JMenuItem("Save");
-        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                InputEvent.CTRL_MASK));
+        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
         saveAs.setEnabled(false);
-        saveAs.addActionListener(l -> {
-            selectPathToSave();
-        });
+        saveAs.addActionListener(l -> selectPathToSave());
 
         fileMenu.add(menuItem);
         fileMenu.addSeparator();
         fileMenu.add(saveAs);
 
         menuItem = new JMenuItem("Exit");
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,
-                InputEvent.CTRL_MASK));
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
         menuItem.addActionListener(ae -> System.exit(0));
         fileMenu.add(menuItem);
 
@@ -140,9 +139,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
         JMenu patchMenu = new JMenu("Patch");
         menuItem = new JMenuItem("Select Patch File");
-        menuItem.addActionListener(l -> {
-            selectPatchFile();
-        });
+        menuItem.addActionListener(l -> selectPatchFile());
 
         patchMenu.add(menuItem);
 
@@ -210,18 +207,38 @@ public class MainWindow extends JFrame implements TableChangedListener {
             if (packageName != null) {
                 treeView.patch(packageName, patch);
             }
+            if (patch != null) {
+                if (patch.isEmpty()) {
+                    int result = JOptionPane.showConfirmDialog(
+                            this,
+                            "save file?",
+                            "path success",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE
+                    );
+                    if (result == JOptionPane.OK_OPTION) {
+                        saveFile(new File(openedFilePath));
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.join("\n", patch.keySet()),
+                            "follow key not patched",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
 //            throw new RuntimeException(e);
         }
     }
 
-    private void openFile(String path) {
+    private void openFile(String path, Runnable next) {
         new SwingWorker<List<Chunk>, Chunk>() {
             @Override
             protected List<Chunk> doInBackground() throws Exception {
-                byte[] resContents =
-                        java.nio.file.Files.readAllBytes(Paths.get(path));
+                byte[] resContents = java.nio.file.Files.readAllBytes(Paths.get(path));
                 BinaryResourceFile binaryRes = new BinaryResourceFile(resContents);
                 return binaryRes.getChunks();
             }
@@ -235,6 +252,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
             protected void done() {
                 try {
                     treeView.setRootWithFile(get(), new File(path).getName());
+                    if (next != null) next.run();
                 } catch (Exception e) {
                     e.printStackTrace();
                     new ErrorDialog(MainWindow.this, e);

@@ -17,6 +17,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -145,7 +146,27 @@ public class ArscTreeView extends JTree implements MouseListener, PackageEditDia
     }
 
     public void patch(String packageName, Map<String, String> patch) {
-        openNode(packageName);
+        ArscNode node = openNode(packageName);
+        if (node == null) return;
+
+        if (!node.children().hasMoreElements()) {
+            arscTableView.setTreeTableModel(createModel(node));
+            arscTableView.updateTable();
+
+            TreeModel model = arscTableView.getTree().getModel();
+            Object root = model.getRoot();
+            int childCount = model.getChildCount(root);
+            for (int i = 0; i < childCount; i++) {
+                ResourceDirectory child = (ResourceDirectory) model.getChild(root, i);
+                String key = child.getName();
+                if (patch.containsKey(key)) {
+                    String value = patch.get(key);
+                    arscTableView.edit(child, value);
+                    patch.remove(key);
+                }
+                if (patch.isEmpty()) break;
+            }
+        }
     }
 
     public ArscNode openNode(String path) {
