@@ -144,6 +144,10 @@ public class ArscTreeView extends JTree implements MouseListener, PackageEditDia
         return component instanceof ArscNode ? (ArscNode) component : null;
     }
 
+    public void patch(String packageName, Map<String, String> patch) {
+        openNode(packageName);
+    }
+
     public void openNode(String path) {
         String[] split = path.split("/");
         ArscNode packageNode = GetPackageNode(split[0]);

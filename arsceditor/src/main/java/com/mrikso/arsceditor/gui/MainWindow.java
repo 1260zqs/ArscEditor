@@ -19,9 +19,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainWindow extends JFrame implements TableChangedListener {
 
@@ -178,7 +181,39 @@ public class MainWindow extends JFrame implements TableChangedListener {
     }
 
     private void patchFile(String path) {
-        treeView.openNode("com.kakaogames.gdts/string/default");
+        try {
+            List<String> lines = java.nio.file.Files.readAllLines(Paths.get(path));
+            String key = null;
+            String packageName = null;
+            Map<String, String> patch = null;
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (line == null || line.isBlank()) {
+                    continue;
+                }
+                if (line.startsWith("@")) {
+                    if (packageName != null) {
+                        treeView.patch(packageName, patch);
+                    }
+                    packageName = line.substring(1);
+                    patch = new HashMap<>();
+                    continue;
+                }
+                if (patch == null) continue;
+                if (key == null) {
+                    key = line;
+                } else {
+                    patch.put(key, line);
+                    key = null;
+                }
+            }
+            if (packageName != null) {
+                treeView.patch(packageName, patch);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+//            throw new RuntimeException(e);
+        }
     }
 
     private void openFile(String path) {
