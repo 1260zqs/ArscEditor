@@ -33,6 +33,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
     private ArscTreeView treeView;
     private JSplitPane splitPane;
+    private JMenuItem saveBtn;
     private JMenuItem saveAs;
     private String openedFilePath;
 
@@ -80,12 +81,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
         if (openFileArg != null && java.nio.file.Files.exists(Paths.get(openFileArg))) {
             Runnable next = null;
             if (patchFileArg != null && java.nio.file.Files.exists(Paths.get(patchFileArg))) {
-                next = new Runnable() {
-                    @Override
-                    public void run() {
-                        patchFile(patchFileArg);
-                    }
-                };
+                next = () -> patchFile(patchFileArg);
             }
             openedFilePath = openFileArg;
             openFile(openFileArg, next);
@@ -100,7 +96,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
         JMenuItem menuItem;
 
         menuItem = new JMenuItem("Open");
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         menuItem.addActionListener(ae -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setAcceptAllFileFilterUsed(false);
@@ -114,18 +110,29 @@ public class MainWindow extends JFrame implements TableChangedListener {
             }
         });
 
-        saveAs = new JMenuItem("Save");
-        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        saveBtn = new JMenuItem("Save");
+        saveBtn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        saveBtn.setEnabled(false);
+        saveBtn.addActionListener(l -> {
+            if (openedFilePath != null) {
+                saveFile(new File(openedFilePath), null);
+            }
+        });
+
+        saveAs = new JMenuItem("Save as");
+        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         saveAs.setEnabled(false);
         saveAs.addActionListener(l -> selectPathToSave());
 
         fileMenu.add(menuItem);
         fileMenu.addSeparator();
+        fileMenu.add(saveBtn);
         fileMenu.add(saveAs);
 
         menuItem = new JMenuItem("Exit");
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
         menuItem.addActionListener(ae -> System.exit(0));
+        fileMenu.addSeparator();
         fileMenu.add(menuItem);
 
         JMenu aboutMenu = new JMenu("About");
@@ -175,6 +182,7 @@ public class MainWindow extends JFrame implements TableChangedListener {
     @Override
     public void tableChanged() {
         saveAs.setEnabled(true);
+        saveBtn.setEnabled(true);
     }
 
     private void patchFile(String path) {
@@ -211,13 +219,13 @@ public class MainWindow extends JFrame implements TableChangedListener {
                 if (patch.isEmpty()) {
                     int result = JOptionPane.showConfirmDialog(
                             this,
-                            "save file?",
-                            "path success",
+                            "Patch success save file & exit?",
+                            "",
                             JOptionPane.OK_CANCEL_OPTION,
                             JOptionPane.QUESTION_MESSAGE
                     );
                     if (result == JOptionPane.OK_OPTION) {
-                        saveFile(new File(openedFilePath));
+                        saveFile(new File(openedFilePath), () -> System.exit(0));
                     }
                 } else {
                     JOptionPane.showMessageDialog(
@@ -283,14 +291,14 @@ public class MainWindow extends JFrame implements TableChangedListener {
 
         fileChooser.setSelectedFile(new File(new File(openedFilePath).getParent() + "/"
                 + fileName + "_mod.arsc"));
-        int result = fileChooser.showSaveDialog(getRootPane());
 
+        int result = fileChooser.showSaveDialog(getRootPane());
         if (result == JFileChooser.APPROVE_OPTION) {
-            saveFile(fileChooser.getSelectedFile());
+            saveFile(fileChooser.getSelectedFile(), null);
         }
     }
 
-    private void saveFile(File path) {
+    private void saveFile(File path, Runnable next) {
         new SwingWorker<Boolean, Integer>() {
             @Override
             protected Boolean doInBackground() throws Exception {
@@ -302,6 +310,10 @@ public class MainWindow extends JFrame implements TableChangedListener {
             protected void done() {
                 try {
                     saveAs.setEnabled(false);
+                    if (next != null) {
+                        next.run();
+                        return;
+                    }
                     JOptionPane.showMessageDialog(MainWindow.this, "File saved!");
                 } catch (Exception e) {
                     e.printStackTrace();
